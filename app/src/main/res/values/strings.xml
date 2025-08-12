@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Badger</string>
+    <string name="provide_permissions_via_settings">As permissões de %s devem ser fornecidas através das configurações</string>
+</resources>
