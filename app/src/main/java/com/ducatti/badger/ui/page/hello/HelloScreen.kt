@@ -227,7 +227,7 @@ private fun Filter(text: String, isActive: Boolean, onClick: () -> Unit) {
             .border(
                 width = 1.dp,
                 color = MaterialTheme.colorScheme.onBackground,
-                shape = MaterialTheme.shapes.medium
+                shape = MaterialTheme.shapes.small
             )
             .background(
                 color = if (isActive) {
@@ -235,7 +235,7 @@ private fun Filter(text: String, isActive: Boolean, onClick: () -> Unit) {
                 } else {
                     MaterialTheme.colorScheme.background
                 },
-                shape = MaterialTheme.shapes.medium
+                shape = MaterialTheme.shapes.small
             )
             .clickable { onClick() },
     ) {
