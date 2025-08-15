@@ -50,8 +50,17 @@ class UserActionsViewModel @AssistedInject constructor(
         }
     }
 
+    fun updateTable(table: String) {
+        val state = _uiState.value
+        if (state is UiState.Ready) {
+            val newUser = state.user.copy(table = table.toIntOrNull() ?: 0)
+            newUser.tableString = table
+            _uiState.value = UiState.Ready(user = newUser, isValid = isValid(newUser))
+        }
+    }
+
     private fun isValid(user: User): Boolean {
-        return user.name.length >= 3 && user.guests >= 0
+        return user.name.length >= 3 && user.guests >= 0 && user.table > 0
     }
 
     fun save() {

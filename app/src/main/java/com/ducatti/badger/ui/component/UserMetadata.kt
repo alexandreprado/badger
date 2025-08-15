@@ -39,6 +39,7 @@ fun UserMetadata(
             } else {
                 Text("convidado", fontSize = 18.sp)
             }
+            Text("| Mesa: ${user.table}", fontSize = 18.sp)
         }
     }
 }

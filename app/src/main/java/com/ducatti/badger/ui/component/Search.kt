@@ -24,6 +24,7 @@ fun SearchField(
     TextField(
         value = searchQuery,
         label = { Text("Pesquisar") },
+        singleLine = true,
         leadingIcon = {
             Icon(
                 imageVector = Icons.Default.Search,

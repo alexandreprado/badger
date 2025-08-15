@@ -1,14 +1,13 @@
 package com.ducatti.badger.ui.page.details
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.Orientation
-import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -60,16 +59,16 @@ fun UserDetailsScreen(
 
 @Composable
 private fun UserDetails(user: User) {
-    val scrollState = rememberScrollState()
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(24.dp),
         modifier = Modifier
             .fillMaxSize()
             .padding(top = 48.dp)
-            .scrollable(scrollState, orientation = Orientation.Vertical)
+            .verticalScroll(rememberScrollState())
     ) {
         UserMetadata(user, shouldCenterItems = true, isExpanded = true)
-        StatusIcon(user.status, Modifier.weight(1f))
+        StatusIcon(user.status)
         QrCode(content = user.id, modifier = Modifier.padding(24.dp))
     }
 }

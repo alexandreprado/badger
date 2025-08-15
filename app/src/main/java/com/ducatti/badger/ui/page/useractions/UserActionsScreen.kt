@@ -16,6 +16,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Face
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -70,6 +71,7 @@ fun UserActionsScreen(
                 isValid = uiState.isValid,
                 onNameChange = viewModel::updateName,
                 onGuestsChange = viewModel::updateGuests,
+                onTableChange = viewModel::updateTable,
                 onSaveChanges = viewModel::save
             )
 
@@ -111,6 +113,7 @@ fun UserForm(
     isValid: Boolean,
     onNameChange: (String) -> Unit,
     onGuestsChange: (String) -> Unit,
+    onTableChange: (String) -> Unit,
     onSaveChanges: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(36.dp)) {
@@ -143,6 +146,24 @@ fun UserForm(
                 )
             },
             onValueChange = onGuestsChange,
+            modifier = Modifier.fillMaxWidth(),
+            keyboardOptions = KeyboardOptions.Default.copy(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Next
+            )
+        )
+
+        TextField(
+            value = user.tableString,
+            label = { Text("Nº da mesa") },
+            singleLine = true,
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.LocationOn,
+                    contentDescription = "Table number"
+                )
+            },
+            onValueChange = onTableChange,
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions.Default.copy(
                 keyboardType = KeyboardType.Number,

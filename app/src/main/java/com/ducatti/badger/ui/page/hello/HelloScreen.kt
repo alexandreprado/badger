@@ -27,6 +27,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
@@ -72,7 +73,7 @@ fun HelloScreen(
                 interactionSource = null,
                 onClick = { focusManager.clearFocus() }
             ),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Header(onNavigateToUserActions = onNavigateToUserActions)
 
@@ -180,8 +181,6 @@ private fun Header(onNavigateToUserActions: (String?) -> Unit) {
             )
         }
     }
-
-
 }
 
 @Composable
@@ -193,7 +192,7 @@ private fun Filters(
 ) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         val isPresentFilterActive = filterState == HelloViewModel.FilterState.Present
         val isWaitingFilterActive = filterState == HelloViewModel.FilterState.Waiting
@@ -224,20 +223,21 @@ private fun Filters(
 private fun Filter(text: String, isActive: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
-            .border(
-                width = 1.dp,
-                color = MaterialTheme.colorScheme.onBackground,
-                shape = MaterialTheme.shapes.small
-            )
             .background(
                 color = if (isActive) {
                     MaterialTheme.colorScheme.primary
                 } else {
                     MaterialTheme.colorScheme.background
                 },
-                shape = MaterialTheme.shapes.small
+                shape = MaterialTheme.shapes.large
             )
-            .clickable { onClick() },
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.onBackground,
+                shape = MaterialTheme.shapes.large
+            )
+            .clip(MaterialTheme.shapes.large)
+            .clickable { onClick() }
     ) {
         Text(
             text = text,
@@ -246,7 +246,7 @@ private fun Filter(text: String, isActive: Boolean, onClick: () -> Unit) {
             } else {
                 MaterialTheme.colorScheme.primary
             },
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
         )
     }
 }
