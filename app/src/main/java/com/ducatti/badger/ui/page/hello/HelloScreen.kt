@@ -1,6 +1,7 @@
 package com.ducatti.badger.ui.page.hello
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -72,24 +74,28 @@ fun HelloScreen(
             ),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        Header(state = uiState.state, onNavigateToUserActions)
+        Header(
+            presentCount = uiState.presentCount,
+            pendingCount = uiState.pendingCount,
+            filterState = uiState.filterState,
+            onFilterChanged = viewModel::onFilterChanged,
+            onNavigateToUserActions = onNavigateToUserActions
+        )
 
         SearchField(
             focusRequester = searchFocusRequester,
-            searchQuery = uiState.state.searchQuery,
+            searchQuery = uiState.searchQuery,
             onSearch = viewModel::searchUser
         )
 
         when (uiState) {
             HelloViewModel.UiState.Idle -> Unit
             is HelloViewModel.UiState.Failed -> ErrorMessage(uiState.error.message.orEmpty())
-            is HelloViewModel.UiState.Loading,
-            is HelloViewModel.UiState.Loaded -> {
-                val isLoading = uiState is HelloViewModel.UiState.Loading
-                UserList(users = uiState.state.users, isLoading = isLoading) {
-                    onNavigateToUser(it)
-                }
-            }
+            is HelloViewModel.UiState.Loading -> LoadingIndicator()
+            is HelloViewModel.UiState.Loaded -> UserList(
+                users = uiState.users,
+                onClick = onNavigateToUser
+            )
         }
 
         FloatingActionButtonEffect {
@@ -98,14 +104,14 @@ fun HelloScreen(
     }
 
     LaunchedEffect(Unit) {
-        if (uiState.state.searchQuery.isNotEmpty()) {
+        if (uiState.searchQuery.isNotEmpty()) {
             searchFocusRequester.requestFocus()
         }
     }
 }
 
 @Composable
-private fun UserList(users: List<User>, isLoading: Boolean, onClick: (id: String) -> Unit) {
+private fun UserList(users: List<User>, onClick: (id: String) -> Unit) {
     Box {
         LazyColumn(
             contentPadding = PaddingValues(bottom = 64.dp)
@@ -114,11 +120,8 @@ private fun UserList(users: List<User>, isLoading: Boolean, onClick: (id: String
                 UserCard(user, onClick)
             }
         }
-        if (users.isEmpty() && !isLoading) {
+        if (users.isEmpty()) {
             EmptyMessage()
-        }
-        if (isLoading) {
-            LoadingIndicator()
         }
     }
 }
@@ -157,7 +160,13 @@ private fun StatusIcon(userStatus: UserStatus) {
 }
 
 @Composable
-private fun Header(state: HelloViewModel.BaseState, onNavigateToUserActions: (String?) -> Unit) {
+private fun Header(
+    presentCount: Int,
+    pendingCount: Int,
+    filterState: HelloViewModel.FilterState,
+    onFilterChanged: (HelloViewModel.FilterState) -> Unit,
+    onNavigateToUserActions: (String?) -> Unit
+) {
     Row(
         modifier = Modifier.padding(top = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -177,19 +186,72 @@ private fun Header(state: HelloViewModel.BaseState, onNavigateToUserActions: (St
         }
     }
 
-    GuestCounter(state)
+    Filters(presentCount, pendingCount, filterState, onFilterChanged)
 }
 
 @Composable
-private fun GuestCounter(state: HelloViewModel.BaseState) {
-    Row {
+private fun Filters(
+    presentCount: Int,
+    pendingCount: Int,
+    filterState: HelloViewModel.FilterState,
+    onFilterChanged: (HelloViewModel.FilterState) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceEvenly,
+    ) {
+        val isPresentFilterActive = filterState == HelloViewModel.FilterState.Present
+        val isWaitingFilterActive = filterState == HelloViewModel.FilterState.Waiting
+        Filter(
+            text = "Presentes: $presentCount",
+            isActive = isPresentFilterActive
+        ) {
+            if (filterState is HelloViewModel.FilterState.Present) {
+                onFilterChanged(HelloViewModel.FilterState.None)
+            } else {
+                onFilterChanged(HelloViewModel.FilterState.Present)
+            }
+        }
+        Filter(
+            text = "Pendentes: $pendingCount",
+            isActive = isWaitingFilterActive
+        ) {
+            if (filterState is HelloViewModel.FilterState.Waiting) {
+                onFilterChanged(HelloViewModel.FilterState.None)
+            } else {
+                onFilterChanged(HelloViewModel.FilterState.Waiting)
+            }
+        }
+    }
+}
+
+@Composable
+private fun Filter(text: String, isActive: Boolean, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.onBackground,
+                shape = MaterialTheme.shapes.medium
+            )
+            .background(
+                color = if (isActive) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.background
+                },
+                shape = MaterialTheme.shapes.medium
+            )
+            .clickable { onClick() },
+    ) {
         Text(
-            text = "Presentes: ${state.presentCount}",
-            modifier = Modifier.weight(1f)
-        )
-        Text(
-            text = "Pendentes: ${state.pendingCount}",
-            modifier = Modifier.weight(1f)
+            text = text,
+            color = if (isActive) {
+                MaterialTheme.colorScheme.onPrimary
+            } else {
+                MaterialTheme.colorScheme.primary
+            },
+            modifier = Modifier.padding(16.dp)
         )
     }
 }

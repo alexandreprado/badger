@@ -6,64 +6,47 @@ import com.ducatti.badger.data.model.User
 import com.ducatti.badger.data.model.UserStatus
 import com.ducatti.badger.domain.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.milliseconds
 
 @HiltViewModel
 class HelloViewModel @Inject constructor(
     val userRepo: UserRepository
 ) : ViewModel() {
 
-    private val searchState = MutableStateFlow<SearchState>(SearchState.Idle)
+    private val filterState = MutableStateFlow<FilterState>(FilterState.None)
     private val searchQueryState = MutableStateFlow("")
 
     val uiState: StateFlow<UiState> =
         combine(
             getUserStream(),
             searchQueryState,
-            searchState
-        ) { users, query, search ->
-            search.toUiState(
-                baseState = users.orEmpty().toBaseState(),
+            filterState
+        ) { users, query, filter ->
+            users.orEmpty().toUiState(
                 query = query,
-                previousState = uiState.value
+                filterState = filter
             )
         }
-            .onStart {
-                emit(UiState.Loading(BaseState()))
-            }
+            .onStart { emit(UiState.Loading) }
             .catch { error -> emit(UiState.Failed(error)) }
             .stateIn(viewModelScope, SharingStarted.Lazily, UiState.Idle)
 
     private fun getUserStream(): Flow<List<User>?> = userRepo.getUsers().getOrThrow()
 
-    @OptIn(FlowPreview::class)
     fun searchUser(searchQuery: String) {
         searchQueryState.value = searchQuery
-        viewModelScope.launch {
-            if (searchQuery.isEmpty()) {
-                searchState.value = SearchState.Idle
-            } else {
-                searchState.value = SearchState.Loading
-                userRepo.searchUsers(searchQuery)
-                    .debounce(300.milliseconds)
-                    .collectLatest { users ->
-                        searchState.value = SearchState.Loaded(users ?: emptyList())
-                    }
-            }
-        }
+    }
+
+    fun onFilterChanged(filterState: FilterState) {
+        this.filterState.value = filterState
     }
 
     private fun List<User>.countPresent(): Int =
@@ -72,65 +55,53 @@ class HelloViewModel @Inject constructor(
     private fun List<User>.countPending(): Int =
         sumOf { if (it.status == UserStatus.WAITING) 1 else 0 }
 
-    private fun List<User>.toBaseState(): BaseState =
-        BaseState(
-            users = this,
+    private fun List<User>.toUiState(
+        query: String,
+        filterState: FilterState,
+    ): UiState {
+        val filtered = when (filterState) {
+            FilterState.None -> this
+            FilterState.Present -> filter { it.status == UserStatus.PRESENT }
+            FilterState.Waiting -> filter { it.status == UserStatus.WAITING }
+        }
+
+        val users = if (query.isNotBlank()) {
+            filtered.filter { it.nameLowercase.contains(query) }
+        } else {
+            filtered
+        }
+
+        return UiState.Loaded(
+            users = users,
+            searchQuery = query,
+            filterState = filterState,
             presentCount = countPresent(),
             pendingCount = countPending()
         )
-
-    private fun SearchState.toUiState(
-        baseState: BaseState,
-        query: String,
-        previousState: UiState? = null
-    ): UiState = when (this) {
-        is SearchState.Loaded -> UiState.Loaded(
-            state = BaseState(
-                users = users,
-                searchQuery = query,
-                presentCount = baseState.presentCount,
-                pendingCount = baseState.pendingCount
-            )
-        )
-
-        is SearchState.Loading -> UiState.Loading(
-            state = BaseState(
-                users = previousState?.state?.users.orEmpty(),
-                searchQuery = query,
-                presentCount = baseState.presentCount,
-                pendingCount = baseState.pendingCount
-            )
-        )
-
-        is SearchState.Failed -> UiState.Failed(error)
-        SearchState.Idle -> UiState.Loaded(
-            state = BaseState(
-                users = baseState.users,
-                searchQuery = query,
-                presentCount = baseState.users.countPresent(),
-                pendingCount = baseState.users.countPending()
-            )
-        )
     }
 
-    sealed class UiState(open val state: BaseState) {
-        data object Idle : UiState(BaseState())
-        data class Loaded(override val state: BaseState) : UiState(state)
-        data class Loading(override val state: BaseState) : UiState(state)
-        data class Failed(val error: Throwable) : UiState(BaseState())
+    sealed class UiState(
+        open val searchQuery: String = "",
+        open val filterState: FilterState = FilterState.None,
+        open val presentCount: Int = 0,
+        open val pendingCount: Int = 0
+    ) {
+        data object Idle : UiState()
+        data class Loaded(
+            val users: List<User>,
+            override val searchQuery: String,
+            override val filterState: FilterState,
+            override val presentCount: Int,
+            override val pendingCount: Int
+        ) : UiState(searchQuery, filterState, presentCount, pendingCount)
+
+        data object Loading : UiState()
+        data class Failed(val error: Throwable) : UiState()
     }
 
-    sealed interface SearchState {
-        data class Loaded(val users: List<User>) : SearchState
-        data object Idle : SearchState
-        data object Loading : SearchState
-        data class Failed(val error: Throwable) : SearchState
+    sealed interface FilterState {
+        data object None : FilterState
+        data object Present : FilterState
+        data object Waiting : FilterState
     }
-
-    data class BaseState(
-        val searchQuery: String = "",
-        val users: List<User> = emptyList(),
-        val presentCount: Int = 0,
-        val pendingCount: Int = 0
-    )
 }
