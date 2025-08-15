@@ -10,6 +10,7 @@ data class User @JvmOverloads constructor(
     val guests: Int = 0,
     val status: UserStatus = UserStatus.WAITING
 ) : IdModel {
+    // Used for editing only
     var guestString: String = ""
 }
 

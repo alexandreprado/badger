@@ -98,12 +98,6 @@ inline fun <reified T : Any> NavGraphBuilder.animatedCompose(
     }
 }
 
-fun BadgerAppNavController.goHome(
-    navOptions: NavOptionsBuilder.() -> Unit = {}
-) {
-    navigateHome { navOptions() }
-}
-
 fun BadgerAppNavController.navigateToCamera(
     navOptions: NavOptionsBuilder.() -> Unit = {}
 ) {
