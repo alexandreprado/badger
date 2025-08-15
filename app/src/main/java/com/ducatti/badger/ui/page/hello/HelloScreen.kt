@@ -72,20 +72,21 @@ fun HelloScreen(
                 interactionSource = null,
                 onClick = { focusManager.clearFocus() }
             ),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Header(
-            presentCount = uiState.presentCount,
-            pendingCount = uiState.pendingCount,
-            filterState = uiState.filterState,
-            onFilterChanged = viewModel::onFilterChanged,
-            onNavigateToUserActions = onNavigateToUserActions
-        )
+        Header(onNavigateToUserActions = onNavigateToUserActions)
 
         SearchField(
             focusRequester = searchFocusRequester,
             searchQuery = uiState.searchQuery,
             onSearch = viewModel::searchUser
+        )
+
+        Filters(
+            presentCount = uiState.presentCount,
+            pendingCount = uiState.pendingCount,
+            filterState = uiState.filterState,
+            onFilterChanged = viewModel::onFilterChanged,
         )
 
         when (uiState) {
@@ -160,13 +161,7 @@ private fun StatusIcon(userStatus: UserStatus) {
 }
 
 @Composable
-private fun Header(
-    presentCount: Int,
-    pendingCount: Int,
-    filterState: HelloViewModel.FilterState,
-    onFilterChanged: (HelloViewModel.FilterState) -> Unit,
-    onNavigateToUserActions: (String?) -> Unit
-) {
+private fun Header(onNavigateToUserActions: (String?) -> Unit) {
     Row(
         modifier = Modifier.padding(top = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -179,14 +174,14 @@ private fun Header(
         IconButton(onClick = { onNavigateToUserActions(null) }) {
             Icon(
                 painter = rememberVectorPainter(Icons.Filled.Add),
-                tint = Color.Unspecified,
+                tint = MaterialTheme.colorScheme.onBackground,
                 contentDescription = "Adicionar convidado",
                 modifier = Modifier.size(28.dp)
             )
         }
     }
 
-    Filters(presentCount, pendingCount, filterState, onFilterChanged)
+
 }
 
 @Composable
@@ -251,7 +246,7 @@ private fun Filter(text: String, isActive: Boolean, onClick: () -> Unit) {
             } else {
                 MaterialTheme.colorScheme.primary
             },
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
         )
     }
 }

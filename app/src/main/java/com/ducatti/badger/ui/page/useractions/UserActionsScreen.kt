@@ -91,7 +91,7 @@ private fun Header(onNavigateBack: () -> Unit) {
         IconButton(onClick = onNavigateBack) {
             Icon(
                 painter = rememberVectorPainter(Icons.AutoMirrored.Default.ArrowBack),
-                tint = Color.Unspecified,
+                tint = MaterialTheme.colorScheme.onBackground,
                 contentDescription = "Voltar",
                 modifier = Modifier.size(28.dp)
             )
