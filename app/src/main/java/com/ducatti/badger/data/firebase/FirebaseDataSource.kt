@@ -30,19 +30,20 @@ class FirebaseDataSource @Inject constructor(
 
     private fun ref(path: String): DatabaseReference = db.getReference(path)
 
-    override suspend fun <T> add(path: String, value: T) {
+    override suspend fun <T> add(path: String, value: T): Void? =
         withContext(ioDispatcher) {
             ref(path).push().setValue(value).await()
         }
-    }
 
-    override suspend fun <T : Any?> set(path: String, value: T) {
-        ref(path).setValue(value).await()
-    }
+    override suspend fun <T : Any?> set(path: String, value: T): Void? =
+        withContext(ioDispatcher) {
+            ref(path).setValue(value).await()
+        }
 
-    override suspend fun update(path: String, values: Map<String, Any?>) {
-        ref(path).updateChildren(values).await()
-    }
+    override suspend fun update(path: String, values: Map<String, Any?>): Void? =
+        withContext(ioDispatcher) {
+            ref(path).updateChildren(values).await()
+        }
 
     override fun <T : Any> observe(path: String, clazz: Class<T>): Flow<T?> =
         ref(path).asSnapshotFlow()

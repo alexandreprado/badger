@@ -12,23 +12,32 @@ class DefaultUserRepository @Inject constructor(
 
     private val path = "users"
 
-    override suspend fun addUser(user: User) {
-        dataSource.add(path, user.copy(nameLowercase = user.name.clearLowercase()))
-    }
+    override suspend fun addUser(user: User): Result<Void?> =
+        runCatching {
+            dataSource.add(path, user.copy(nameLowercase = user.name.clearLowercase()))
+        }
 
     override suspend fun getUser(id: String) =
-        dataSource.getOnce("$path/$id", User::class.java)
+        runCatching {
+            dataSource.getOnce("$path/$id", User::class.java)
+        }
 
-    override suspend fun updateUser(user: User) {
-        dataSource.set(path, user.copy(nameLowercase = user.name.clearLowercase()))
-    }
+    override suspend fun updateUser(user: User): Result<Void?> =
+        runCatching {
+            dataSource.set(
+                "$path/${user.id}",
+                user.copy(nameLowercase = user.name.clearLowercase())
+            )
+        }
 
     override suspend fun removeUser(id: String) {
         dataSource.remove("$path/$id")
     }
 
-    override fun getUsers(): Flow<List<User>?> =
-        dataSource.observeList(path, orderByChild = "nameLowercase", User::class.java)
+    override fun getUsers(): Result<Flow<List<User>?>> =
+        runCatching {
+            dataSource.observeList(path, orderByChild = "nameLowercase", User::class.java)
+        }
 
     override fun searchUsers(name: String): Flow<List<User>?> =
         dataSource.observeSearch(

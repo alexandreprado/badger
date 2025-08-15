@@ -5,14 +5,19 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
@@ -47,7 +53,8 @@ data object HelloRoute
 fun HelloScreen(
     viewModel: HelloViewModel = hiltViewModel(),
     onNavigateToCamera: () -> Unit,
-    onNavigateToUser: (String) -> Unit
+    onNavigateToUser: (String) -> Unit,
+    onNavigateToUserActions: (String?) -> Unit
 ) {
     val uiState = viewModel.uiState.collectAsStateWithLifecycle().value
     val focusManager = LocalFocusManager.current
@@ -65,7 +72,7 @@ fun HelloScreen(
             ),
         verticalArrangement = Arrangement.spacedBy(24.dp),
     ) {
-        Header(uiState.state)
+        Header(state = uiState.state, onNavigateToUserActions)
 
         SearchField(
             focusRequester = searchFocusRequester,
@@ -100,7 +107,9 @@ fun HelloScreen(
 @Composable
 private fun UserList(users: List<User>, isLoading: Boolean, onClick: (id: String) -> Unit) {
     Box {
-        LazyColumn {
+        LazyColumn(
+            contentPadding = PaddingValues(bottom = 64.dp)
+        ) {
             items(users) { user ->
                 UserCard(user, onClick)
             }
@@ -115,7 +124,7 @@ private fun UserList(users: List<User>, isLoading: Boolean, onClick: (id: String
 }
 
 @Composable
-fun UserCard(user: User, onClick: (id: String) -> Unit) {
+private fun UserCard(user: User, onClick: (id: String) -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -129,7 +138,7 @@ fun UserCard(user: User, onClick: (id: String) -> Unit) {
 }
 
 @Composable
-fun StatusIcon(userStatus: UserStatus) {
+private fun StatusIcon(userStatus: UserStatus) {
     if (userStatus == UserStatus.PRESENT) {
         Icon(
             painter = painterResource(R.drawable.ic_check),
@@ -148,17 +157,31 @@ fun StatusIcon(userStatus: UserStatus) {
 }
 
 @Composable
-fun Header(state: HelloViewModel.BaseState) {
-    Text(
-        text = "Lista de Convidados",
-        fontSize = 28.sp,
-        modifier = Modifier.padding(top = 16.dp)
-    )
+private fun Header(state: HelloViewModel.BaseState, onNavigateToUserActions: (String?) -> Unit) {
+    Row(
+        modifier = Modifier.padding(top = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = "Lista de Convidados",
+            fontSize = 24.sp,
+        )
+        Spacer(Modifier.weight(1f))
+        IconButton(onClick = { onNavigateToUserActions(null) }) {
+            Icon(
+                painter = rememberVectorPainter(Icons.Filled.Add),
+                tint = Color.Unspecified,
+                contentDescription = "Adicionar convidado",
+                modifier = Modifier.size(28.dp)
+            )
+        }
+    }
+
     GuestCounter(state)
 }
 
 @Composable
-fun GuestCounter(state: HelloViewModel.BaseState) {
+private fun GuestCounter(state: HelloViewModel.BaseState) {
     Row {
         Text(
             text = "Presentes: ${state.presentCount}",
@@ -172,7 +195,7 @@ fun GuestCounter(state: HelloViewModel.BaseState) {
 }
 
 @Composable
-fun EmptyMessage() {
+private fun EmptyMessage() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Text(
             text = "Nenhum convidado encontrado.",

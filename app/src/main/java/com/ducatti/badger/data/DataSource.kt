@@ -3,9 +3,9 @@ package com.ducatti.badger.data
 import kotlinx.coroutines.flow.Flow
 
 interface DataSource {
-    suspend fun <T : Any?> add(path: String, value: T)
-    suspend fun <T : Any?> set(path: String, value: T)
-    suspend fun update(path: String, values: Map<String, Any?>)
+    suspend fun <T : Any?> add(path: String, value: T): Void?
+    suspend fun <T : Any?> set(path: String, value: T): Void?
+    suspend fun update(path: String, values: Map<String, Any?>): Void?
     fun <T : Any> observe(path: String, clazz: Class<T>): Flow<T?>
     suspend fun <T : Any> getOnce(path: String, clazz: Class<T>): T?
     fun <T : Any> observeList(path: String, orderByChild: String?, clazz: Class<T>): Flow<List<T>>

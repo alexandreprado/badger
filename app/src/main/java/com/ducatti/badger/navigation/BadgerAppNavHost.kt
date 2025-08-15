@@ -8,19 +8,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavBackStackEntry
-import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptionsBuilder
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import com.ducatti.badger.ui.page.camera.CameraScreen
-import com.ducatti.badger.ui.page.hello.HelloRoute
-import com.ducatti.badger.ui.page.hello.HelloScreen
 import com.ducatti.badger.ui.page.camera.QRScannerRoute
+import com.ducatti.badger.ui.page.confirmation.ConfirmationRoute
+import com.ducatti.badger.ui.page.confirmation.ConfirmationScreen
+import com.ducatti.badger.ui.page.confirmation.ConfirmationViewModel
 import com.ducatti.badger.ui.page.details.UserDetailsRoute
 import com.ducatti.badger.ui.page.details.UserDetailsScreen
 import com.ducatti.badger.ui.page.details.UserDetailsViewModel
+import com.ducatti.badger.ui.page.hello.HelloRoute
+import com.ducatti.badger.ui.page.hello.HelloScreen
+import com.ducatti.badger.ui.page.useractions.UserActionsRoute
+import com.ducatti.badger.ui.page.useractions.UserActionsScreen
+import com.ducatti.badger.ui.page.useractions.UserActionsViewModel
 
 @Composable
 fun BadgerAppNavHost(
@@ -37,17 +42,41 @@ fun BadgerAppNavHost(
         animatedCompose<HelloRoute> {
             HelloScreen(
                 onNavigateToCamera = navController::navigateToCamera,
-                onNavigateToUser = navController::navigateToDetails
+                onNavigateToUser = navController::navigateToDetails,
+                onNavigateToUserActions = navController::navigateToUserActions
             )
         }
         animatedCompose<QRScannerRoute> {
-            CameraScreen(navController::navigateToDetails)
+            CameraScreen(
+                onNavigateToConfirmation = navController::navigateToConfirmation,
+                onNavigateBack = navController::popBackStack
+            )
+        }
+        animatedCompose<ConfirmationRoute> { backStackEntry ->
+            val code = backStackEntry.toRoute<ConfirmationRoute>().code
+            ConfirmationScreen(
+                viewModel =
+                    hiltViewModel<ConfirmationViewModel, ConfirmationViewModel.Factory>(
+                        key = code,
+                    ) { factory -> factory.create(code) },
+                onNavigateBack = navController::popBackStack
+            )
         }
         animatedCompose<UserDetailsRoute> { backStackEntry ->
             val code = backStackEntry.toRoute<UserDetailsRoute>().code
             UserDetailsScreen(
                 viewModel =
                     hiltViewModel<UserDetailsViewModel, UserDetailsViewModel.Factory>(
+                        key = code,
+                    ) { factory -> factory.create(code) },
+                onNavigateBack = navController::popBackStack
+            )
+        }
+        animatedCompose<UserActionsRoute> { backStackEntry ->
+            val code = backStackEntry.toRoute<UserActionsRoute>().code
+            UserActionsScreen(
+                viewModel =
+                    hiltViewModel<UserActionsViewModel, UserActionsViewModel.Factory>(
                         key = code,
                     ) { factory -> factory.create(code) },
                 onNavigateBack = navController::popBackStack
@@ -92,20 +121,20 @@ fun BadgerAppNavController.navigateToDetails(
     }
 }
 
-@Composable
-fun NavBackStackEntry?.getTitle(): String {
-    this ?: return ""
-    val destination = destination
-    return when {
-        destination.hasRoute<HelloRoute>() -> "Hello!"
-//            stringResource("Hello")
+fun BadgerAppNavController.navigateToConfirmation(
+    code: String,
+    navOptions: NavOptionsBuilder.() -> Unit = {}
+) {
+    navigateTo(route = ConfirmationRoute(code)) {
+        navOptions()
+    }
+}
 
-//        destination.hasRoute<HealthDetailRoute>() -> {
-//            val args = toRoute<HealthDetailRoute>()
-//            val typeTitle = getStringByName(args.type.value)
-//            stringResource(R.string.detail_page_title, typeTitle)
-//        }
-
-        else -> ""
+fun BadgerAppNavController.navigateToUserActions(
+    code: String?,
+    navOptions: NavOptionsBuilder.() -> Unit = {}
+) {
+    navigateTo(route = UserActionsRoute(code)) {
+        navOptions()
     }
 }

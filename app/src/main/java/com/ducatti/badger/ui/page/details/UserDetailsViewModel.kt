@@ -23,7 +23,6 @@ class UserDetailsViewModel @AssistedInject constructor(
 ) : ViewModel() {
 
     private val userState = MutableStateFlow<User?>(null)
-
     val uiState = userState
         .map { user ->
             user?.let {
@@ -41,7 +40,12 @@ class UserDetailsViewModel @AssistedInject constructor(
 
     private fun loadUser(id: String) {
         viewModelScope.launch {
-            userState.value = userRepo.getUser(id)
+            userRepo.getUser(id).fold(
+                onSuccess = { user ->
+                    userState.value = user
+                },
+                onFailure = {}
+            )
         }
     }
 

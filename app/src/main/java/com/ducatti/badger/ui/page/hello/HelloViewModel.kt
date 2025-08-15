@@ -7,6 +7,7 @@ import com.ducatti.badger.data.model.UserStatus
 import com.ducatti.badger.domain.UserRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -14,7 +15,6 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -26,36 +26,28 @@ class HelloViewModel @Inject constructor(
     val userRepo: UserRepository
 ) : ViewModel() {
 
-    private val usersState = MutableStateFlow<List<User>?>(null)
     private val searchState = MutableStateFlow<SearchState>(SearchState.Idle)
     private val searchQueryState = MutableStateFlow("")
 
     val uiState: StateFlow<UiState> =
         combine(
-            usersState.filterNotNull(),
+            getUserStream(),
             searchQueryState,
             searchState
         ) { users, query, search ->
             search.toUiState(
-                baseState = users.toBaseState(),
+                baseState = users.orEmpty().toBaseState(),
                 query = query,
                 previousState = uiState.value
             )
         }
             .onStart {
                 emit(UiState.Loading(BaseState()))
-                loadUsers()
             }
             .catch { error -> emit(UiState.Failed(error)) }
             .stateIn(viewModelScope, SharingStarted.Lazily, UiState.Idle)
 
-    private fun loadUsers() {
-        viewModelScope.launch {
-            userRepo.getUsers().collect {
-                usersState.value = it ?: emptyList()
-            }
-        }
-    }
+    private fun getUserStream(): Flow<List<User>?> = userRepo.getUsers().getOrThrow()
 
     @OptIn(FlowPreview::class)
     fun searchUser(searchQuery: String) {
@@ -73,10 +65,6 @@ class HelloViewModel @Inject constructor(
             }
         }
     }
-
-//    fun onQueryChanged(searchQuery: String) {
-//        searchQueryState.value = searchQuery
-//    }
 
     private fun List<User>.countPresent(): Int =
         sumOf { if (it.status == UserStatus.PRESENT) 1 else 0 }
