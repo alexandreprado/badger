@@ -36,7 +36,10 @@ class UserActionsViewModel @AssistedInject constructor(
     fun updateName(name: String) {
         val state = _uiState.value
         if (state is UiState.Ready) {
-            val newUser = state.user.copy(name = name)
+            val newUser = state.user.copy(name = name).apply {
+                guestString = if (guests > 0) guests.toString() else ""
+                tableString = if (table > 0) table.toString() else ""
+            }
             _uiState.value = UiState.Ready(user = newUser, isValid = isValid(newUser))
         }
     }
@@ -44,8 +47,10 @@ class UserActionsViewModel @AssistedInject constructor(
     fun updateGuests(guests: String) {
         val state = _uiState.value
         if (state is UiState.Ready) {
-            val newUser = state.user.copy(guests = guests.toIntOrNull() ?: 0)
-            newUser.guestString = guests
+            val newUser = state.user.copy(guests = guests.toIntOrNull() ?: 0).apply {
+                guestString = guests
+                tableString = if (table > 0) table.toString() else ""
+            }
             _uiState.value = UiState.Ready(user = newUser, isValid = isValid(newUser))
         }
     }
@@ -53,8 +58,10 @@ class UserActionsViewModel @AssistedInject constructor(
     fun updateTable(table: String) {
         val state = _uiState.value
         if (state is UiState.Ready) {
-            val newUser = state.user.copy(table = table.toIntOrNull() ?: 0)
-            newUser.tableString = table
+            val newUser = state.user.copy(table = table.toIntOrNull() ?: 0).apply {
+                tableString = table
+                guestString = if (guests > 0) guests.toString() else ""
+            }
             _uiState.value = UiState.Ready(user = newUser, isValid = isValid(newUser))
         }
     }

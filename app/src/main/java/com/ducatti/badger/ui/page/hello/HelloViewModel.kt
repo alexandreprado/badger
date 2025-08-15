@@ -50,10 +50,10 @@ class HelloViewModel @Inject constructor(
     }
 
     private fun List<User>.countPresent(): Int =
-        sumOf { if (it.status == UserStatus.PRESENT) 1 else 0 }
+        filter { it.status == UserStatus.PRESENT }.sumOf { 1 + it.guests }
 
     private fun List<User>.countPending(): Int =
-        sumOf { if (it.status == UserStatus.WAITING) 1 else 0 }
+        filter { it.status == UserStatus.WAITING }.sumOf { 1 + it.guests }
 
     private fun List<User>.toUiState(
         query: String,

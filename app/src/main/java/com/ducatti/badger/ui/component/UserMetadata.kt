@@ -31,7 +31,9 @@ fun UserMetadata(
             Text("+", fontSize = 24.sp)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(user.guests.toString())
+            if (user.guests > 0) {
+                Text(user.guests.toString())
+            }
             if (user.guests > 1) {
                 Text("convidados", fontSize = 18.sp)
             } else if (user.guests == 0) {
